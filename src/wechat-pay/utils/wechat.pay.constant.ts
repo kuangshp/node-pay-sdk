@@ -6,7 +6,23 @@ export const enum WechatPayUrlList {
   /**
    * 统一下单URL
    */
-  UnifiedOrderUrl = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
+  UnifiedOrderUrl = 'https://api.mch.weixin.qq.com/pay/unifiedorder',
+
+  /**
+   * 根据订单号查询订单URL
+   */
+  orderQueryByTransactionId = 'https://api.mch.weixin.qq.com/pay/orderquery',
+
+  /**
+   * 关闭订单的URL
+   */
+  closeOrder = 'https://api.mch.weixin.qq.com/pay/closeorder',
+
+  /**
+   * 退款的URL
+   */
+  refund = 'https://api.mch.weixin.qq.com/secapi/pay/refund',
+
 }
 
 /**

@@ -3,9 +3,9 @@ import * as queryString from 'querystring';
 import { createHash } from "crypto";
 
 import { ObjectType } from '../types';
-import { WechatTradeType } from './utils/wechat.pay.constant';
+import { WechatTradeType, WechatPayUrlList } from './utils/wechat.pay.constant';
 import { parseObjFromXml } from './utils/xml.util';
-
+// https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_4
 interface IWechatPayConfig {
   mchId: string; // 商户号
   appId: string; // 应用id
@@ -19,12 +19,22 @@ interface IOrderXml {
   openId: string, // 支付的标识(可以是订单id,或者为空)
   outTradeNo: string, // 商家平台生成的交易号
   spbillCreateIp: string, // 支付的ip地址
-  totalFee: string | number, // 支付的金额(分为单位)
+  totalFee: number, // 支付的金额(分为单位)
   tradeType: WechatTradeType, // 支付类型
   nonceStr?: string, // 随机字符串
   sign?: string, // 签名
 }
 
+interface IRefund {
+  transactionId: string, // 微信订单交易号
+  outRefundNo: string, // 商户退款交易号
+  totalFee: number, // 订单金额
+  refundFee: number, // 退款金额
+  refundFeeType?: string, // 币种默认是人民币CNY
+  refundDesc?: string, //退款原因
+  refundAccount?: string, //退款金额账号
+  notifyUrl?: string, // 退款回调地址
+}
 
 export class WechatPay {
   private payConfig: IWechatPayConfig;
@@ -58,7 +68,7 @@ export class WechatPay {
     };
     //第一次签名 参数并且到参数中
     unifiedorderParams.sign = this.getSign(unifiedorderParams);
-    const url = 'https://api.mch.weixin.qq.com/pay/unifiedorder';
+    const url = WechatPayUrlList.UnifiedOrderUrl;
     const postData = JSON.stringify(this.getUnifiedorderXmlParams(unifiedorderParams));
     const { data } = await axios.post(url, postData);
     // 将xml格式化转换json格式,并且判断签名是否成功
@@ -67,16 +77,16 @@ export class WechatPay {
       throw unifiedOrder.return_msg;
     }
     // 第二次签名
-    const timeStamp = String(new Date().getTime() / 1000);
+    const timeStamp = Number.parseInt(String(new Date().getTime() / 1000));
     const nonceStr = this.createNonceStr();
     const wcPayParams: ObjectType = {
-      'appId': this.payConfig.appId,     //公众号名称，由商户传入
-      'timeStamp': timeStamp,         //时间戳，自1970年以来的秒数
-      'nonceStr': nonceStr, //随机串                 
+      appId: this.payConfig.appId,     //公众号名称，由商户传入
+      timeStamp: timeStamp,         //时间戳，自1970年以来的秒数
+      nonceStr: nonceStr, //随机串                 
       // 通过统一下单接口获取
-      'package': 'prepay_id=' + unifiedOrder.prepay_id,   //小程序支付用这个
-      'code_url': unifiedOrder.prepay_id,
-      'signType': 'MD5',         //微信签名方式：
+      package: 'prepay_id=' + unifiedOrder.prepay_id,   //小程序支付用这个
+      code_url: unifiedOrder.prepay_id,
+      signType: 'MD5',         //微信签名方式：
     };
     const PaySign = this.getSign(wcPayParams); //微信支付签名
     let resultObj: ObjectType = {
@@ -101,6 +111,73 @@ export class WechatPay {
     }
   }
 
+  /**
+   * @Author: 水痕
+   * @Date: 2020-04-24 10:51:53
+   * @LastEditors: 水痕
+   * @Description: 根据微信订单号查询订单
+   * @param transactionId {String} 微信交易的订单号
+   * @return: 
+   */
+  async queryOrder(transactionId: string): Promise<ObjectType> {
+    let postData: ObjectType = {
+      appid: this.payConfig.appId,
+      mch_id: this.payConfig.mchId,
+      transaction_id: transactionId,
+      nonce_str: this.createNonceStr(),
+      sign_type: 'MD5'
+    }
+    postData['sign'] = this.getSign(postData)
+    return await axios.post(WechatPayUrlList.orderQueryByTransactionId, postData);
+  }
+
+  /**
+   * @Author: 水痕
+   * @Date: 2020-04-24 11:03:01
+   * @LastEditors: 水痕
+   * @Description: 关闭订单
+   * @param outTradeNo {String} 商户订单号【非微信支付交易号】
+   * @return: 
+   */
+  async closeOrder(outTradeNo: string): Promise<ObjectType> {
+    let postData: ObjectType = {
+      appid: this.payConfig.appId,
+      mch_id: this.payConfig.mchId,
+      out_trade_no: outTradeNo,
+      nonce_str: this.createNonceStr(),
+      sign_type: 'MD5'
+    }
+    postData['sign'] = this.getSign(postData);
+    return await axios.post(WechatPayUrlList.closeOrder, postData);
+  }
+
+  /**
+   * @Author: 水痕
+   * @Date: 2020-04-24 11:16:12
+   * @LastEditors: 水痕
+   * @Description: 退款处理
+   * @param {type} 
+   * @return: 
+   */
+  async refund(params: IRefund): Promise<any> {
+    const { transactionId, outRefundNo, totalFee, refundFee, refundFeeType = 'CNY', refundDesc = '商品已售完', refundAccount = 'REFUND_SOURCE_RECHARGE_FUNDS', notifyUrl = '' } = params;
+    let postData: ObjectType = {
+      appid: this.payConfig.appId,
+      mch_id: this.payConfig.mchId,
+      nonce_str: this.createNonceStr(),
+      transaction_id: transactionId,
+      out_refund_no: outRefundNo,
+      total_fee: totalFee,
+      refund_fee: refundFee,
+      refund_fee_type: refundFeeType,
+      refund_desc: refundDesc,
+      refund_account: refundAccount,
+      notify_url: notifyUrl,
+      sign_type: 'MD5'
+    }
+    postData['sign'] = this.getSign(postData);
+    return await axios.post(WechatPayUrlList.refund, postData);
+  }
   /*
    * 获取微信统一下单参数
    */
