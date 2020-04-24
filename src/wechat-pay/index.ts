@@ -14,9 +14,9 @@ interface IWechatPayConfig {
 
 interface IOrderXml {
   attach: string, // 支付的标题
-  body: string, // 支付的请求体
+  body: string, // 支付的请求体 可以为空字符串
   notifyUrl: string, // 支付的回调
-  openid: string, // 支付的标识(可以是订单id,或者为空)
+  openId: string, // 支付的标识(可以是订单id,或者为空)
   outTradeNo: string, // 商家平台生成的交易号
   spbillCreateIp: string, // 支付的ip地址
   totalFee: string | number, // 支付的金额(分为单位)
@@ -50,7 +50,7 @@ export class WechatPay {
       mch_id: this.payConfig.mchId,
       nonce_str: this.createNonceStr(),
       notify_url: param.notifyUrl,// 微信付款后的回调地址
-      openid: param.openid,
+      openid: param.openId,
       out_trade_no: param.outTradeNo,
       spbill_create_ip: param.spbillCreateIp,
       total_fee: param.totalFee,
@@ -83,7 +83,7 @@ export class WechatPay {
       TimeStamp: timeStamp,
       NonceStr: nonceStr,
       Package: "prepay_id=" + unifiedOrder.prepay_id,
-      SignType: WechatTradeType.NATIVE,
+      SignType: WechatTradeType.APP,
       PaySign: PaySign,
     }
   }
