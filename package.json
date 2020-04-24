@@ -1,7 +1,7 @@
 {
   "name": "node-pay-sdk",
   "version": "0.0.1",
-  "description": "node项目中使用微信和支付宝支付的封装",
+  "description": "node项目中使用微信和支付宝支付的",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc"
