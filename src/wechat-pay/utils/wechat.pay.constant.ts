@@ -23,6 +23,15 @@ export const enum WechatPayUrlList {
    */
   refund = 'https://api.mch.weixin.qq.com/secapi/pay/refund',
 
+  /**
+   * 查询退款URL
+   */
+  refundQuery = 'https://api.mch.weixin.qq.com/pay/refundquery',
+
+  /**
+   * 下载账单URL
+   */
+  downloadBill = 'https://api.mch.weixin.qq.com/pay/downloadbill'
 }
 
 /**
@@ -71,4 +80,11 @@ export const enum WechatPaySingType {
 export const enum WechatPayResCode {
   Success = 'SUCCESS',
   Fail = 'FAIL'
+}
+
+export const enum downloadBillType {
+  ALL = 'ALL', // 全部的
+  SUCCESS = 'SUCCESS', // 成功的
+  REFUND = 'REFUND', // 退款的
+  RECHARGE_REFUND = 'RECHARGE_REFUND', // 当日充值的
 }

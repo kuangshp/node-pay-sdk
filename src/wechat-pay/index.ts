@@ -3,7 +3,7 @@ import * as queryString from 'querystring';
 import { createHash } from "crypto";
 
 import { ObjectType } from '../types';
-import { WechatTradeType, WechatPayUrlList } from './utils/wechat.pay.constant';
+import { WechatTradeType, WechatPayUrlList, downloadBillType, WechatPayResCode } from './utils/wechat.pay.constant';
 import { parseObjFromXml } from './utils/xml.util';
 // https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_4
 interface IWechatPayConfig {
@@ -128,7 +128,11 @@ export class WechatPay {
       sign_type: 'MD5'
     }
     postData['sign'] = this.getSign(postData)
-    return await axios.post(WechatPayUrlList.orderQueryByTransactionId, postData);
+    const result: ObjectType = await axios.post(WechatPayUrlList.orderQueryByTransactionId, postData);
+    if (result.return_code !== WechatPayResCode.Success) {
+      throw result.return_msg;
+    }
+    return result;
   }
 
   /**
@@ -148,7 +152,11 @@ export class WechatPay {
       sign_type: 'MD5'
     }
     postData['sign'] = this.getSign(postData);
-    return await axios.post(WechatPayUrlList.closeOrder, postData);
+    const result: ObjectType = await axios.post(WechatPayUrlList.closeOrder, postData);
+    if (result.return_code !== WechatPayResCode.Success) {
+      throw result.return_msg;
+    }
+    return result;
   }
 
   /**
@@ -176,7 +184,63 @@ export class WechatPay {
       sign_type: 'MD5'
     }
     postData['sign'] = this.getSign(postData);
-    return await axios.post(WechatPayUrlList.refund, postData);
+    const result: ObjectType = await axios.post(WechatPayUrlList.refund, postData);
+    if (result.return_code !== WechatPayResCode.Success) {
+      throw result.return_msg;
+    }
+    return result;
+  }
+
+  /**
+   * @Author: 水痕
+   * @Date: 2020-04-24 15:17:27
+   * @LastEditors: 水痕
+   * @Description: 
+   * @param refundId {String} 微信退款单号
+   * @param offset {Number} 偏移量
+   * @return: 
+   */
+  async refundQuery(refundId: string, offset: number = 15): Promise<any> {
+    let postData: ObjectType = {
+      appid: this.payConfig.appId,
+      mch_id: this.payConfig.mchId,
+      nonce_str: this.createNonceStr(),
+      refund_id: refundId,
+      offset: offset,
+      sign_type: 'MD5'
+    }
+    postData['sign'] = this.getSign(postData);
+    const result: ObjectType = await axios.post(WechatPayUrlList.refundQuery, postData);
+    if (result.return_code !== WechatPayResCode.Success) {
+      throw result.return_msg;
+    }
+    return result;
+  }
+
+  /**
+   * @Author: 水痕
+   * @Date: 2020-04-24 15:39:31
+   * @LastEditors: 水痕
+   * @Description: 下载账单
+   * @param billDate {String} 账单日比如:20140603
+   * @param billType {String} 账单类型 
+   * @return: 
+   */
+  async downloadBill(billDate: string, billType: downloadBillType = downloadBillType.SUCCESS): Promise<any> {
+    let postData: ObjectType = {
+      appid: this.payConfig.appId,
+      mch_id: this.payConfig.mchId,
+      nonce_str: this.createNonceStr(),
+      bill_date: billDate,
+      bill_type: billType,
+      sign_type: 'MD5'
+    }
+    postData['sign'] = this.getSign(postData);
+    const result: ObjectType = await axios.post(WechatPayUrlList.downloadBill, postData);
+    if (result.return_code !== WechatPayResCode.Success) {
+      throw result.return_msg;
+    }
+    return result;
   }
   /*
    * 获取微信统一下单参数
