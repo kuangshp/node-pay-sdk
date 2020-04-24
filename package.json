@@ -1,0 +1,22 @@
+{
+  "name": "node-pay",
+  "version": "0.0.1",
+  "description": "node使用微信和支付宝支付",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [],
+  "homepage": "https://github.com/kuangshp/nodePay",
+  "author": "kuangshp@126.com",
+  "license": "MIT",
+  "dependencies": {
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^13.13.2"
+  },
+  "files": [
+    "lib/**/*"
+  ]
+}
