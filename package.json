@@ -11,10 +11,13 @@
   "author": "kuangshp@126.com",
   "license": "MIT",
   "dependencies": {
-    "crypto": "^1.0.1"
+    "axios": "^0.19.2",
+    "crypto": "^1.0.1",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@types/node": "^13.13.2"
+    "@types/node": "^13.13.2",
+    "@types/xml2js": "^0.4.5"
   },
   "files": [
     "lib/**/*"
