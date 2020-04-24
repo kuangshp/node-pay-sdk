@@ -53,7 +53,7 @@ export class WechatPay {
    */
   async createOrder(param: IOrderXml): Promise<ObjectType> {
     // 生成统一下单接口参数
-    const unifiedorderParams: any = {
+    let unifiedorderParams: any = {
       appid: this.payConfig.appId,
       attach: param.attach,
       body: param.body,
@@ -67,7 +67,7 @@ export class WechatPay {
       trade_type: param.tradeType, // 支付类型
     };
     //第一次签名 参数并且到参数中
-    unifiedorderParams.sign = this.getSign(unifiedorderParams);
+    unifiedorderParams['sign'] = this.getSign(unifiedorderParams);
     const url = WechatPayUrlList.UnifiedOrderUrl;
     const postData = JSON.stringify(this.getUnifiedorderXmlParams(unifiedorderParams));
     const { data } = await axios.post(url, postData);
