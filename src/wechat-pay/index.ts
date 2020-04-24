@@ -20,8 +20,8 @@ interface IOrderXml {
   outTradeNo: string, // 商家平台生成的交易号
   spbillCreateIp: string, // 支付的ip地址
   totalFee: string | number, // 支付的金额(分为单位)
+  tradeType: WechatTradeType, // 支付类型
   nonceStr?: string, // 随机字符串
-  tradeType?: WechatTradeType, // 支付类型
   sign?: string, // 签名
 }
 
