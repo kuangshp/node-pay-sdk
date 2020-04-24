@@ -70,21 +70,34 @@ export class WechatPay {
     const timeStamp = String(new Date().getTime() / 1000);
     const nonceStr = this.createNonceStr();
     const wcPayParams: ObjectType = {
-      "appId": this.payConfig.appId,     //公众号名称，由商户传入
-      "timeStamp": timeStamp,         //时间戳，自1970年以来的秒数
-      "nonceStr": nonceStr, //随机串                 
+      'appId': this.payConfig.appId,     //公众号名称，由商户传入
+      'timeStamp': timeStamp,         //时间戳，自1970年以来的秒数
+      'nonceStr': nonceStr, //随机串                 
       // 通过统一下单接口获取
-      "package": "prepay_id=" + unifiedOrder.prepay_id,   //小程序支付用这个
-      "code_url": unifiedOrder.prepay_id,
-      "signType": "MD5",         //微信签名方式：
+      'package': 'prepay_id=' + unifiedOrder.prepay_id,   //小程序支付用这个
+      'code_url': unifiedOrder.prepay_id,
+      'signType': 'MD5',         //微信签名方式：
     };
     const PaySign = this.getSign(wcPayParams); //微信支付签名
-    return {
-      TimeStamp: timeStamp,
-      NonceStr: nonceStr,
-      Package: "prepay_id=" + unifiedOrder.prepay_id,
-      SignType: WechatTradeType.APP,
-      PaySign: PaySign,
+    let resultObj: ObjectType = {
+      timeStamp: timeStamp,
+      nonceStr: nonceStr,
+      signType: 'MD5',
+      paySign: PaySign,
+    };
+    if (Object.is(param.tradeType, WechatTradeType.JSAPI)) { // 小程序支付
+      return Object.assign(resultObj, {
+        package: 'prepay_id=' + unifiedOrder.prepay_id
+      })
+    } else if (
+      Object.is(param.tradeType, WechatTradeType.NATIVE) ||
+      Object.is(param.tradeType, WechatTradeType.MWEB)
+    ) {
+      return Object.assign(resultObj, {
+        codeUrl: unifiedOrder.prepay_id,
+      })
+    } else {
+      return resultObj;
     }
   }
 
@@ -99,7 +112,7 @@ export class WechatPay {
       '<mch_id>' + this.payConfig.mchId + '</mch_id> ' +
       '<nonce_str>' + obj.nonceStr + '</nonce_str> ' +
       '<notify_url>' + obj.notifyUrl + '</notify_url>' +
-      '<openid>' + obj.openid + '</openid> ' +
+      '<openid>' + obj.openId + '</openid> ' +
       '<out_trade_no>' + obj.outTradeNo + '</out_trade_no>' +
       '<spbill_create_ip>' + obj.spbillCreateIp + '</spbill_create_ip> ' +
       '<total_fee>' + obj.totalFee + '</total_fee> ' +
