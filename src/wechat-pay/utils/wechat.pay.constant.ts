@@ -6,7 +6,7 @@ export const enum WechatPayUrlList {
   /**
    * 统一下单URL
    */
-  UnifiedOrderUrl = 'https://api.mch.weixin.qq.com/pay/unifiedorder',
+  unifiedOrderUrl = 'https://api.mch.weixin.qq.com/pay/unifiedorder',
 
   /**
    * 根据订单号查询订单URL

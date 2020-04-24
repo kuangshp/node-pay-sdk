@@ -6,6 +6,7 @@ import { ObjectType } from '../types';
 import { WechatTradeType, WechatPayUrlList, downloadBillType, WechatPayResCode } from './utils/wechat.pay.constant';
 import { parseObjFromXml } from './utils/xml.util';
 // https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_4
+// https://pay.weixin.qq.com/wiki/doc/api/app/app.php?chapter=9_12&index=2
 interface IWechatPayConfig {
   mchId: string; // 商户号
   appId: string; // 应用id
@@ -14,14 +15,14 @@ interface IWechatPayConfig {
 
 interface IOrderXml {
   attach: string, // 支付的标题
-  body: string, // 支付的请求体 可以为空字符串
-  notifyUrl: string, // 支付的回调
-  openId: string, // 支付的标识(可以是订单id,或者为空)
-  outTradeNo: string, // 商家平台生成的交易号
-  spbillCreateIp: string, // 支付的ip地址
-  totalFee: number, // 支付的金额(分为单位)
-  tradeType: WechatTradeType, // 支付类型
-  nonceStr?: string, // 随机字符串
+  body: string, // 支付的请求体
+  notify_url: string, // 支付的回调
+  openid: string, // 支付的标识(可以是订单id,或者为空)
+  out_trade_no: string, // 商家平台生成的交易号
+  spbill_create_ip: string, // 支付的ip地址
+  total_fee: number, // 支付的金额(分为单位)
+  nonce_str?: string, // 随机字符串
+  trade_type?: WechatTradeType, // 支付类型
   sign?: string, // 签名
 }
 
@@ -59,20 +60,23 @@ export class WechatPay {
       body: param.body,
       mch_id: this.payConfig.mchId,
       nonce_str: this.createNonceStr(),
-      notify_url: param.notifyUrl,// 微信付款后的回调地址
-      openid: param.openId,
-      out_trade_no: param.outTradeNo,
-      spbill_create_ip: param.spbillCreateIp,
-      total_fee: param.totalFee,
-      trade_type: param.tradeType, // 支付类型
+      notify_url: param.notify_url,// 微信付款后的回调地址
+      openid: param.openid,
+      out_trade_no: param.out_trade_no,
+      spbill_create_ip: param.spbill_create_ip,
+      total_fee: param.total_fee,
+      trade_type: param.trade_type,
     };
     //第一次签名 参数并且到参数中
     unifiedorderParams['sign'] = this.getSign(unifiedorderParams);
-    const url = WechatPayUrlList.UnifiedOrderUrl;
+    console.log(unifiedorderParams, '???')
+    const url = WechatPayUrlList.unifiedOrderUrl;
     const postData = JSON.stringify(this.getUnifiedorderXmlParams(unifiedorderParams));
+    console.log('xml格式化', postData);
     const { data } = await axios.post(url, postData);
     // 将xml格式化转换json格式,并且判断签名是否成功
     const unifiedOrder: any = await parseObjFromXml(data);
+    console.log('第一次签名', unifiedOrder)
     if (unifiedOrder.return_code !== 'SUCCESS') {
       throw unifiedOrder.return_msg;
     }
@@ -89,19 +93,20 @@ export class WechatPay {
       signType: 'MD5',         //微信签名方式：
     };
     const PaySign = this.getSign(wcPayParams); //微信支付签名
+    console.log('第二次前面', PaySign)
     let resultObj: ObjectType = {
       timeStamp: timeStamp,
       nonceStr: nonceStr,
       signType: 'MD5',
       paySign: PaySign,
     };
-    if (Object.is(param.tradeType, WechatTradeType.JSAPI)) { // 小程序支付
+    if (Object.is(param.trade_type, WechatTradeType.JSAPI)) { // 小程序支付
       return Object.assign(resultObj, {
         package: 'prepay_id=' + unifiedOrder.prepay_id
       })
     } else if (
-      Object.is(param.tradeType, WechatTradeType.NATIVE) ||
-      Object.is(param.tradeType, WechatTradeType.MWEB)
+      Object.is(param.trade_type, WechatTradeType.NATIVE) ||
+      Object.is(param.trade_type, WechatTradeType.MWEB)
     ) {
       return Object.assign(resultObj, {
         codeUrl: unifiedOrder.prepay_id,
@@ -251,13 +256,13 @@ export class WechatPay {
       '<attach>' + obj.attach + '</attach> ' +
       '<body>' + obj.body + '</body> ' +
       '<mch_id>' + this.payConfig.mchId + '</mch_id> ' +
-      '<nonce_str>' + obj.nonceStr + '</nonce_str> ' +
-      '<notify_url>' + obj.notifyUrl + '</notify_url>' +
-      '<openid>' + obj.openId + '</openid> ' +
-      '<out_trade_no>' + obj.outTradeNo + '</out_trade_no>' +
-      '<spbill_create_ip>' + obj.spbillCreateIp + '</spbill_create_ip> ' +
-      '<total_fee>' + obj.totalFee + '</total_fee> ' +
-      '<trade_type>' + obj.tradeType + '</trade_type> ' +
+      '<nonce_str>' + obj.nonce_str + '</nonce_str> ' +
+      '<notify_url>' + obj.notify_url + '</notify_url>' +
+      '<openid>' + obj.openid + '</openid> ' +
+      '<out_trade_no>' + obj.out_trade_no + '</out_trade_no>' +
+      '<spbill_create_ip>' + obj.spbill_create_ip + '</spbill_create_ip> ' +
+      '<total_fee>' + obj.total_fee + '</total_fee> ' +
+      '<trade_type>' + obj.trade_type + '</trade_type> ' +
       '<sign>' + obj.sign + '</sign> ' +
       '</xml>';
     return body;
